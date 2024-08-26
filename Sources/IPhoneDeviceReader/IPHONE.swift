@@ -9,12 +9,12 @@ import Foundation
 import LoggerFactory
 import SharedDeviceLib
 
-struct IPHONE {
+public struct IPHONE {
     
     let logger = LoggerFactory.get(category: "IPHONE")
     
     /// singleton instance of this class
-    static let bridge = IPHONE()
+    public static let bridge = IPHONE()
     
     // URL of the embedded version of ExifTool
     fileprivate var ideviceid: URL
@@ -24,15 +24,15 @@ struct IPHONE {
     fileprivate var umount: URL
     
     // Verify access to the embedded version of ExifTool
-    init() {
-        ideviceid = URL(fileURLWithPath: "/opt/homebrew/bin/idevice_id")
-        ideviceinfo = URL(fileURLWithPath: "/opt/homebrew/bin/ideviceinfo")
-        ifuse = URL(fileURLWithPath: "/opt/homebrew/bin/ifuse")
+    public init(path: String = "/opt/homebrew/bin") {
+        ideviceid = URL(fileURLWithPath: "\(path)/idevice_id")
+        ideviceinfo = URL(fileURLWithPath: "\(path)/ideviceinfo")
+        ifuse = URL(fileURLWithPath: "\(path)/ifuse")
         df = URL(fileURLWithPath: "/bin/df")
         umount = URL(fileURLWithPath: "/sbin/umount")
     }
     
-    func validCommands() -> Bool {
+    public func validCommands() -> Bool {
         if !FileManager.default.fileExists(atPath: ideviceid.path) {
             return false
         }
@@ -41,8 +41,6 @@ struct IPHONE {
         }
         if !FileManager.default.fileExists(atPath: ifuse.path) {
             return false
-        }
-        if !FileManager.default.fileExists(atPath: df.path) {
             return false
         }
         if !FileManager.default.fileExists(atPath: umount.path) {
@@ -51,7 +49,7 @@ struct IPHONE {
         return true
     }
     
-    func devices() -> [String]{
+    public func devices() -> [String]{
         if ideviceid.path == "" {
             self.logger.log(.error, "ideviceid path is empty !!!")
             return []
@@ -83,7 +81,7 @@ struct IPHONE {
         return result
     }
     
-    func mount(path:String) -> Bool{
+    public func mount(path:String) -> Bool{
         self.logger.log("START TO MOUNT")
         if ifuse.path == "" {
             self.logger.log(.error, "ifuse path is empty !!!")
@@ -120,7 +118,7 @@ struct IPHONE {
         }
     }
     
-    func unmountFuse(){
+    public func unmountFuse(){
         if ifuse.path == "" {
             self.logger.log(.error, "umount path is empty !!!")
             return
@@ -150,7 +148,7 @@ struct IPHONE {
         
     }
     
-    func unmount(path:String){
+    public func unmount(path:String){
         if ifuse.path == "" {
             self.logger.log(.error, "umount path is empty !!!")
             return
@@ -181,7 +179,7 @@ struct IPHONE {
 
     }
     
-    func mounted(path:String) -> Bool {
+    public func mounted(path:String) -> Bool {
         guard devices().count > 0 else {return false}
         let pipe = Pipe()
         autoreleasepool { () -> Void in
@@ -214,7 +212,7 @@ struct IPHONE {
         return false
     }
     
-    func device() -> PhoneDevice? {
+    public func device() -> PhoneDevice? {
         if ideviceinfo.path == "" {
             self.logger.log(.error, "ideviceinfo path is empty !!!")
             return nil
@@ -292,7 +290,7 @@ struct IPHONE {
         }
     }
     
-    func pull(mountPoint:String, in remoteFolder:String, to targetPath:String) -> Bool{
+    public func pull(mountPoint:String, in remoteFolder:String, to targetPath:String) -> Bool{
         guard mounted(path: mountPoint) else {return false}
         let remoteUrl:URL = URL(fileURLWithPath: mountPoint).appendingPathComponent(remoteFolder)
         let localUrl:URL = URL(fileURLWithPath: targetPath)
@@ -327,7 +325,7 @@ struct IPHONE {
     
     
     
-    func md5(mountPoint:String, at remoteFile:String) -> String {
+    public func md5(mountPoint:String, at remoteFile:String) -> String {
         guard mounted(path: mountPoint) else {return ""}
         let remoteUrl:URL = URL(fileURLWithPath: mountPoint).appendingPathComponent(remoteFile)
         let fileManager = FileManager.default
@@ -358,7 +356,7 @@ struct IPHONE {
         }
     }
     
-    func pull(mountPoint:String, sourcePath:String, from remoteFile:String, to targetPath:String) -> Bool{
+    public func pull(mountPoint:String, sourcePath:String, from remoteFile:String, to targetPath:String) -> Bool{
         self.logger.log("IOS PULL: from \(remoteFile) - to: \(targetPath)")
         //guard mounted(path: mountPoint) else {return false}
         let filename = URL(fileURLWithPath: remoteFile).lastPathComponent
@@ -398,7 +396,7 @@ struct IPHONE {
         }
     }
     
-    func push(mountPoint:String, from filePath:String, to remoteFolder:String) -> Bool{
+    public func push(mountPoint:String, from filePath:String, to remoteFolder:String) -> Bool{
         //guard mounted(path: mountPoint) else {return false}
         let remoteUrl:URL = URL(fileURLWithPath: mountPoint).appendingPathComponent(remoteFolder)
         let localUrl:URL = URL(fileURLWithPath: filePath)
@@ -420,7 +418,7 @@ struct IPHONE {
     }
     
     
-    func datetime(of filename: String, in path:String, mountPoint:String) -> String {
+    public func datetime(of filename: String, in path:String, mountPoint:String) -> String {
         let workpath = URL(fileURLWithPath: mountPoint).appendingPathComponent(path).path
         let pipe = Pipe()
         autoreleasepool { () -> Void in
@@ -452,7 +450,7 @@ struct IPHONE {
         return ""
     }
     
-    func files(mountPoint:String, in path: String) -> [PhoneFile] {
+    public func files(mountPoint:String, in path: String) -> [PhoneFile] {
         let workURL = URL(fileURLWithPath: mountPoint).appendingPathComponent(path)
         if !FileManager.default.fileExists(atPath: workURL.path) {
             return []
@@ -495,7 +493,7 @@ struct IPHONE {
     
     
     
-    func folders(mountPoint:String, in path: String) -> [String] {
+    public func folders(mountPoint:String, in path: String) -> [String] {
         let workpath = URL(fileURLWithPath: mountPoint).appendingPathComponent(path).path
         self.logger.log("getting folders from \(workpath)")
         var result:[String] = []
@@ -578,7 +576,7 @@ struct IPHONE {
     }
     
     
-    func filenames(mountPoint:String, in path: String) -> [String] {
+    public func filenames(mountPoint:String, in path: String) -> [String] {
         let workpath = URL(fileURLWithPath: mountPoint).appendingPathComponent(path).path
         self.logger.log("getting folders from \(workpath)")
         var result:[String] = []
