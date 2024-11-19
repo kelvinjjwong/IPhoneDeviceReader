@@ -41,7 +41,6 @@ public struct IPHONE {
         }
         if !FileManager.default.fileExists(atPath: ifuse.path) {
             return false
-            return false
         }
         if !FileManager.default.fileExists(atPath: umount.path) {
             return false
@@ -82,7 +81,7 @@ public struct IPHONE {
     }
     
     public func mount(path:String) -> Bool{
-        self.logger.log("START TO MOUNT")
+        self.logger.log(.trace, "START TO MOUNT")
         if ifuse.path == "" {
             self.logger.log(.error, "ifuse path is empty !!!")
             return false
@@ -104,7 +103,7 @@ public struct IPHONE {
                 self.logger.log(.error, error)
             }
         }
-        self.logger.log("RUN MOUNT")
+        self.logger.log(.trace, "RUN MOUNT")
 //        command.launch()
 //        command.waitUntilExit()
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
@@ -201,14 +200,14 @@ public struct IPHONE {
         pipe.fileHandleForReading.closeFile()
         self.logger.log(string)
         let lines = string.components(separatedBy: "\n")
-        self.logger.log("lines = \(lines.count)")
+        self.logger.log(.trace, "lines = \(lines.count)")
         for line in lines {
             if line.starts(with: "ifuse@macfuse") && line.range(of: path) != nil {
-                self.logger.log("mounted")
+                self.logger.log(.trace, "mounted")
                 return true
             }
         }
-        self.logger.log("no mount record")
+        self.logger.log(.trace, "no mount record")
         return false
     }
     
@@ -236,8 +235,8 @@ public struct IPHONE {
         pipe.fileHandleForReading.closeFile()
         self.logger.log(string)
         if string.starts(with: "ERROR: Could not connect to lockdownd") {
-            self.logger.log("Please unlock the screen of iOS device")
-            self.logger.log("If failed again, refer to https://github.com/libimobiledevice/libimobiledevice/issues/717 , please reinstall libimobiledevice and ideviceinstaller by brew")
+            self.logger.log(.trace, "Please unlock the screen of iOS device")
+            self.logger.log(.trace, "If failed again, refer to https://github.com/libimobiledevice/libimobiledevice/issues/717 , please reinstall libimobiledevice and ideviceinstaller by brew")
 //            MessageEventCenter.default.showMessage(type: "Device Error", name: "iPhone", message: "Please unlock screen of iOS device, otherwise may need to reinstall ideviceinfo by Homebrew")
             return nil
         }
@@ -298,18 +297,18 @@ public struct IPHONE {
         let fileManager = FileManager.default
         if fileManager.fileExists(atPath: remoteUrl.path) && fileManager.fileExists(atPath: localUrl.path) {
             do{
-                self.logger.log("Pulling from \(remoteUrl.path) to \(localUrl.path)")
+                self.logger.log(.trace, "Pulling from \(remoteUrl.path) to \(localUrl.path)")
                 let options: FileManager.DirectoryEnumerationOptions = [.skipsHiddenFiles, .skipsPackageDescendants, .skipsSubdirectoryDescendants ]
                 let resourceKeys = [URLResourceKey.isRegularFileKey, URLResourceKey.typeIdentifierKey, URLResourceKey.isDirectoryKey]
                 let enumerator = fileManager.enumerator(at: remoteUrl,
                                                         includingPropertiesForKeys: resourceKeys,
                                                         options: options, errorHandler: { (url, error) -> Bool in
-                                                            self.logger.log("Remote directory enumerator error at \(url): ", error)
+                                                            self.logger.log(.trace, "Remote directory enumerator error at \(url): ", error)
                                                             return false
                 })!
                 
                 for case let remoteFileUrl as URL in enumerator {
-                    self.logger.log("Pulling from \(remoteFileUrl.path) to \(localUrl.path)")
+                    self.logger.log(.trace, "Pulling from \(remoteFileUrl.path) to \(localUrl.path)")
                     try fileManager.copyItem(at: remoteFileUrl, to: localUrl)
                 }
                 return true
@@ -318,7 +317,7 @@ public struct IPHONE {
                 return false
             }
         }else{
-            self.logger.log("URL not exists: \(remoteUrl.path) OR \(localUrl.path)")
+            self.logger.log(.trace, "URL not exists: \(remoteUrl.path) OR \(localUrl.path)")
             return false
         }
     }
@@ -357,7 +356,7 @@ public struct IPHONE {
     }
     
     public func pull(mountPoint:String, sourcePath:String, from remoteFile:String, to targetPath:String) -> Bool{
-        self.logger.log("IOS PULL: from \(remoteFile) - to: \(targetPath)")
+        self.logger.log(.trace, "IOS PULL: from \(remoteFile) - to: \(targetPath)")
         //guard mounted(path: mountPoint) else {return false}
         let filename = URL(fileURLWithPath: remoteFile).lastPathComponent
         let mountedDeviceFilePath:URL = URL(fileURLWithPath: mountPoint).appendingPathComponent(remoteFile)
@@ -373,13 +372,13 @@ public struct IPHONE {
                 do {
                     try fileManager.createDirectory(at: targetFileFolder, withIntermediateDirectories: true, attributes: nil)
                 }catch{
-                    self.logger.log("Unable to create target path: \(targetFileFolder.path)")
+                    self.logger.log(.trace, "Unable to create target path: \(targetFileFolder.path)")
                     self.logger.log(.error, error)
                 }
             }
             if !fileManager.fileExists(atPath: targetFilePath.path) {
                 do{
-                    self.logger.log("Pulling from \(mountedDeviceFilePath.path) to \(targetFilePath.path)")
+                    self.logger.log(.trace, "Pulling from \(mountedDeviceFilePath.path) to \(targetFilePath.path)")
                     try fileManager.copyItem(at: mountedDeviceFilePath, to: targetFilePath)
                     return true
                 }catch{
@@ -387,11 +386,11 @@ public struct IPHONE {
                     return false
                 }
             }else{
-                self.logger.log("TARGET FILE EXISTS: \(targetFilePath.path), ignore copy")
+                self.logger.log(.trace, "TARGET FILE EXISTS: \(targetFilePath.path), ignore copy")
                 return false
             }
         }else{
-            self.logger.log("Mounted device file path not exists: \(mountedDeviceFilePath.path)")
+            self.logger.log(.trace, "Mounted device file path not exists: \(mountedDeviceFilePath.path)")
             return false
         }
     }
@@ -404,7 +403,7 @@ public struct IPHONE {
         let fileManager = FileManager.default
         if fileManager.fileExists(atPath: remoteUrl.path) && fileManager.fileExists(atPath: localUrl.path) {
             do{
-                self.logger.log("Pushing from \(localUrl.path) to \(remoteUrl.path)")
+                self.logger.log(.trace, "Pushing from \(localUrl.path) to \(remoteUrl.path)")
                 try fileManager.copyItem(at: localUrl, to: remoteUrl)
                 return true
             }catch{
@@ -412,7 +411,7 @@ public struct IPHONE {
                 return false
             }
         }else{
-            self.logger.log("URL not exists: \(remoteUrl.path) OR \(localUrl.path)")
+            self.logger.log(.trace, "URL not exists: \(remoteUrl.path) OR \(localUrl.path)")
             return false
         }
     }
@@ -456,7 +455,7 @@ public struct IPHONE {
             return []
         }
         let workpath = workURL.path
-        self.logger.log("getting files from \(workpath)")
+        self.logger.log(.trace, "getting files from \(workpath)")
         var result:[PhoneFile] = []
         let pipe = Pipe()
         autoreleasepool { () -> Void in
@@ -487,7 +486,7 @@ public struct IPHONE {
                                           allowedExt: FileTypeRecognizer.allowed,
                                           allowedSuffix: ["_backup_hd"], // wechat chatroom image/video thumbnails
                                           deviceOS: .mac)
-        self.logger.log("got \(result.count) files from \(workpath)")
+        self.logger.log(.trace, "got \(result.count) files from \(workpath)")
         return result
     }
     
@@ -495,7 +494,7 @@ public struct IPHONE {
     
     public func folders(mountPoint:String, in path: String) -> [String] {
         let workpath = URL(fileURLWithPath: mountPoint).appendingPathComponent(path).path
-        self.logger.log("getting folders from \(workpath)")
+        self.logger.log(.trace, "getting folders from \(workpath)")
         var result:[String] = []
         let pipe = Pipe()
         autoreleasepool { () -> Void in
@@ -517,14 +516,14 @@ public struct IPHONE {
         pipe.fileHandleForReading.closeFile()
         //self.logger.log(string)
         result = DeviceShell.getFolderNames(from: string)
-        self.logger.log("got \(result.count) folders from \(workpath)")
+        self.logger.log(.trace, "got \(result.count) folders from \(workpath)")
         return result
     }
     
     
     fileprivate func filenamesForReference(mountPoint:String, in path: String, recursive:Bool=false) -> [String:[String]] {
         let workpath = URL(fileURLWithPath: mountPoint).appendingPathComponent(path).path
-        self.logger.log("getting folders from \(path)")
+        self.logger.log(.trace, "getting folders from \(path)")
         var result:[String:[String]] = [:]
         let param = recursive ? "-1tR" : "-1"
         let pipe = Pipe()
@@ -578,7 +577,7 @@ public struct IPHONE {
     
     public func filenames(mountPoint:String, in path: String) -> [String] {
         let workpath = URL(fileURLWithPath: mountPoint).appendingPathComponent(path).path
-        self.logger.log("getting folders from \(workpath)")
+        self.logger.log(.trace, "getting folders from \(workpath)")
         var result:[String] = []
         let pipe = Pipe()
         autoreleasepool { () -> Void in
@@ -607,7 +606,7 @@ public struct IPHONE {
                                           allowedExt: FileTypeRecognizer.allowed,
                                           allowedSuffix: ["_backup_hd"], // wechat chatroom image/video thumbnails
                                           deviceOS: .mac)
-        self.logger.log("got \(result.count) files from \(workpath)")
+        self.logger.log(.trace, "got \(result.count) files from \(workpath)")
         return result
     }
 }
