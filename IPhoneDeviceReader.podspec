@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name        = "IPhoneDeviceReader"
-  s.version     = "1.0.4"
+  s.version     = "1.0.5"
   s.summary     = "A library for reading files from iPhone."
   s.homepage    = "https://github.com/kelvinjjwong/IPhoneDeviceReader"
   s.license     = { :type => "MIT" }
